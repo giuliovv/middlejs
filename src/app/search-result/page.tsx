@@ -1,7 +1,7 @@
 // src/app/search-result/page.tsx
-"use client"; // Ensure this is a client component
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchResults, FlightResult } from '../utils/api';
 import { CommonFlight } from '../types';
@@ -11,6 +11,7 @@ import { formatDuration } from '../utils/helpers';
 const SearchResultPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const didFetch = useRef(false);
 
   const city1 = searchParams.get('city1') || '';
   const city2 = searchParams.get('city2') || '';
@@ -24,8 +25,11 @@ const SearchResultPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
+
     const getFlights = async () => {
-      if (!city1 || !city2 || !departureDays || !returnDays || !dateFrom || !dateTo) {
+      if (!city1 || !city2 || departureDays.length === 0 || returnDays.length === 0 || !dateFrom || !dateTo) {
         setError('Missing query parameters');
         setLoading(false);
         return;
@@ -111,7 +115,7 @@ const SearchResultPage: React.FC = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p>Error: {error}</p>
+        <p className="text-red-500">Error: {error}</p>
       </div>
     );
   }
