@@ -1,14 +1,14 @@
 // src/app/search-result/page.tsx
 "use client";
 
-import React, { useEffect, useState, Suspense, useRef } from 'react';
+import React, { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchResults, FlightResult } from '../utils/api';
 import { CommonFlight } from '../types';
 import FlightCard from '../components/FlightCard';
 import { formatDuration } from '../utils/helpers';
 
-const SearchResultPage: React.FC = () => {
+const SearchResultContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const didFetch = useRef(false);
@@ -104,42 +104,52 @@ const SearchResultPage: React.FC = () => {
     getFlights();
   }, [city1, city2, departureDays, returnDays, dateFrom, dateTo]);
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-red-500">Error: {error}</p>
+      </div>
+    );
+  }
+
+  if (commonFlights.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>No combinations found :( Try a different date range. Less broad is sometimes better.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold">Search Results</h1>
+      </header>
+      {commonFlights.map((flight, index) => (
+        <FlightCard
+          key={index}
+          flight={flight}
+          index={index}
+          city1={city1}
+          city2={city2}
+        />
+      ))}
+    </div>
+  );
+};
+
+const SearchResultPage: React.FC = () => {
   return (
     <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-      {loading && (
-        <div className="flex justify-center items-center h-screen">
-          <p>Loading...</p>
-        </div>
-      )}
-
-      {error && (
-        <div className="flex justify-center items-center h-screen">
-          <p className="text-red-500">Error: {error}</p>
-        </div>
-      )}
-
-      {!loading && !error && commonFlights.length === 0 && (
-        <div className="flex justify-center items-center h-screen">
-          <p>No combinations found :( Try a different date range. Less broad is sometimes better.</p>
-        </div>
-      )}
-
-      {!loading && !error && commonFlights.length > 0 && (
-        <div className="container mx-auto p-4">
-          <header className="mb-8">
-            <h1 className="text-3xl font-bold">Search Results</h1>
-          </header>
-          {commonFlights.map((flight, index) => (
-            <FlightCard
-              key={index}
-              flight={flight}
-              index={index}
-              city1={city1}
-              city2={city2}
-            />
-          ))}
-        </div>
-      )}
+      <SearchResultContent />
     </Suspense>
   );
 };
